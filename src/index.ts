@@ -1,4 +1,5 @@
 import { Console } from "console"
+import {Blockchain} from './blockchain'
 
 const dificulty = Number(process.argv[2]) || 4
 const blockchain = new Blockchain(dificulty)
