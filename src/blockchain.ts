@@ -2,7 +2,6 @@ import { createHash } from "crypto";
 import { hash, validHash } from "./helpers";
 
 export interface Block {
-
   // pt-br = informação meta dado do bloco.
   //en = block meta data information.
   header: {
@@ -20,6 +19,9 @@ export interface Block {
 }
 
 export class Blockchain {
+  mineBlocks(block: { sequence: number; timestamp: number; data: any; hashPrevious: string; }) {
+    throw new Error("Method not implemented.");
+  }
   #chain: Block[] = []
   private prefixoPow = '0' //init 0
 
@@ -44,6 +46,10 @@ export class Blockchain {
       payload
 
     }
+  }
+
+  get chain () {
+    return this.#chain
   }
 
   private get lastBlock(): Block {
@@ -87,10 +93,10 @@ export class Blockchain {
 
         return {
           blockMiner: {
-            payloa: { ...block },
+            payload: { ...block },
             header: {
               nonce,
-              hashBlock
+              hashblock : hashBlock
             }
           }
         }
@@ -99,4 +105,32 @@ export class Blockchain {
       nonce++
     }
   }
+
+  verifyBlock(block: Block): boolean {
+    if (block.payload.hashPrevious !== this.hashLastBlock()) {
+      console.error(`Block #${block.payload.sequence} invalid: the previous hash 
+      is ${this.hashLastBlock().slice(0,12)} not ${block.payload.hashPrevious.slice(0,12)}`)
+      return false
+    }
+    const hashTest = hash(hash(JSON.stringify(block.payload)) +
+      block.header.nonce)
+    if (!validHash({ 
+      hash: hashTest, 
+      dificulty: this.dificulty, 
+      prefixo: this.prefixoPow })) {
+      console.error(`Block #${block.payload.sequence} invalid:
+       Nonce ${block.header.nonce} is invalid and cannot be verified`)
+      return false
+    }
+    return true
+  }
+
+   sendBlock(block : Block): Block[] {
+     if (this.verifyBlock(block)) {
+       this.#chain.push(block)
+       console.log(`Block #${ block.payload.sequence } was added to blockchain:
+       ${JSON.stringify(block, null,2)}`) // print block ad
+     }
+     return this.#chain
+   }
 }
