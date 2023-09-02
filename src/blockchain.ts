@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { hash } from "./helpers";
+import { hash, validHash } from "./helpers";
 
 export interface Block {
 
@@ -31,14 +31,14 @@ export class Blockchain {
   private createBlockGenesis(): Block {
     const payload: Block['payload'] = {
       sequence: 0, // first block
-      timestamp:  +new Date (), //data covert in number
+      timestamp: +new Date(), //data covert in number
       data: 'First block',
       hashPrevious: ''
     }
 
     return {
       header: {
-        nonce:0,
+        nonce: 0,
         hashblock: hash(JSON.stringify(payload)),
       },
       payload
@@ -46,7 +46,7 @@ export class Blockchain {
     }
   }
 
-  private get lastBlock():Block{
+  private get lastBlock(): Block {
     return this.#chain.at(-1) as Block //get last block
   }
 
@@ -54,8 +54,8 @@ export class Blockchain {
     return this.lastBlock.header.hashblock
   }
 
-  createBlock(data:any):Block['payload'] {
-    const newBlock :Block['payload'] = {
+  createBlock(data: any): Block['payload'] {
+    const newBlock: Block['payload'] = {
       sequence: this.lastBlock.payload.sequence + 1,
       timestamp: +new Date(),
       data: data,
@@ -63,5 +63,40 @@ export class Blockchain {
     }
     console.log(`Block #${newBlock.sequence} criado: ${JSON.stringify(newBlock)}`)
     return newBlock
+  }
+
+  blockMiner(block: Block['payload']) {
+    let nonce = 0
+    let start = +new Date()
+    while (true) {
+
+      const hashBlock = hash(JSON.stringify(block))
+      const hashPow = hash(hashBlock + nonce)
+
+      if (validHash({
+        hash: hashPow,
+        dificulty: this.dificulty,
+        prefixo: this.prefixoPow
+      })) {
+        const end = +new Date()
+        const hashReduced = hashBlock.slice(0, 12)
+        const timeMinered = (end - start) / 100
+
+        console.log(`Block #${block.sequence} minered in ${timeMinered}s. 
+      Hash ${hashReduced} (${nonce} tentatives)`)
+
+        return {
+          blockMiner: {
+            payloa: { ...block },
+            header: {
+              nonce,
+              hashBlock
+            }
+          }
+        }
+      }
+
+      nonce++
+    }
   }
 }
